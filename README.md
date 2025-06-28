@@ -35,10 +35,6 @@ class MLP(nn.Module):
         self.dropout = nn.Dropout(config.dropout)
 
     def forward(self, x, expand=False):
-        # if not expand and collapsed == False:
-        # if True:
-        # with torch.no_grad():
-            # self.c_fc.weight = Parameter(self.c_fc2.weight @ self.c_fc1.weight)
         if not expand:
             with torch.no_grad():
                 x = self.c_fc(x)

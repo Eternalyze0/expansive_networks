@@ -33,12 +33,13 @@ class Net(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc1(x)
         x = F.relu(x)
-        res = x
+        res128 = x
         x = self.fc1p1(x)
-        x = self.fc1p2(x)
-        x = self.fc1p3(x)
-        x = self.fc1p4(x)
-        x = self.fc1p5(x) + res
+        resw = x
+        x = self.fc1p2(x) + resw
+        x = self.fc1p3(x) + resw
+        x = self.fc1p4(x) + resw
+        x = self.fc1p5(x) + res128
         x = self.dropout2(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -137,7 +138,7 @@ def main():
 
     model = Net().to(device)
     # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
-    optimizer = optim.AdamW(model.parameters(), lr=0.0001, betas=(0.99, 0.99))
+    optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):

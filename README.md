@@ -7,7 +7,7 @@ The hypothesis is that, while mathematically equivalent and contrary to modern w
 git clone https://github.com/karpathy/nanoGPT
 cd nanoGPT
 rm model.py
-add expansive_nanogpt_model_v2_beta.py as model.py
+add expansive_nanogpt_model.py or expansive_nanogpt_model_v2_beta.py as model.py
 python3.10 train.py config/train_shakespeare_char.py --compile=False --max_iters=1000000 --bias=False
 ```
 

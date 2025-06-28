@@ -10,13 +10,18 @@ from torch.optim.lr_scheduler import StepLR
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
+        self.w = 1000
         self.conv1 = nn.Conv2d(1, 32, 3, 1)
         self.conv2 = nn.Conv2d(32, 64, 3, 1)
         self.dropout1 = nn.Dropout(0.25)
         self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(9216, 10128)
-        self.fc1p1 = nn.Linear(10128, 10128)
-        self.fc2 = nn.Linear(10128, 10)
+        self.fc1 = nn.Linear(9216, 128)
+        self.fc1p1 = nn.Linear(128, self.w)
+        self.fc1p2 = nn.Linear(self.w, self.w)
+        self.fc1p3 = nn.Linear(self.w, self.w)
+        self.fc1p4 = nn.Linear(self.w, self.w)
+        self.fc1p5 = nn.Linear(self.w, 128)
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -27,9 +32,14 @@ class Net(nn.Module):
         x = self.dropout1(x)
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        # x = F.relu(x)
+        x = F.relu(x)
+        res = x
         x = self.fc1p1(x)
-        # x = self.dropout2(x)
+        x = self.fc1p2(x)
+        x = self.fc1p3(x)
+        x = self.fc1p4(x)
+        x = self.fc1p5(x) + res
+        x = self.dropout2(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
         return output
@@ -126,7 +136,8 @@ def main():
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
     model = Net().to(device)
-    optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
+    # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
+    optimizer = optim.AdamW(model.parameters(), lr=0.0001, betas=(0.99, 0.99))
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):

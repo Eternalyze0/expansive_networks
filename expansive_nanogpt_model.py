@@ -79,7 +79,7 @@ class MLP(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.w = 1000
+        self.w = 2000
         self.c_fc    = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)
         self.c_fc1   = nn.Linear(config.n_embd, self.w, bias=config.bias)
         self.c_fc2   = nn.Linear(self.w, 4 * config.n_embd, bias=config.bias)

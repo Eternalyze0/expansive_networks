@@ -11,6 +11,53 @@ add expansive_nanogpt_model_v2_beta.py as model.py
 python3.10 train.py config/train_shakespeare_char.py --compile=False --max_iters=1000000 --bias=False
 ```
 
+## Code Summary
+
+```py
+        if self.training:
+            x = x + self.mlp(self.ln_2(x), expand=True if torch.randint(100, (1,)) == 0 else False)
+        else:
+            x = x + self.mlp(self.ln_2(x), expand=False)
+```
+```py
+class MLP(nn.Module):
+
+    def __init__(self, config):
+        super().__init__()
+        self.w = 2000
+        self.c_fc    = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)
+        self.c_fc1   = nn.Linear(config.n_embd, self.w, bias=config.bias)
+        self.c_fc2   = nn.Linear(self.w, 4 * config.n_embd, bias=config.bias)
+        self.gelu    = nn.GELU()
+        self.c_proj  = nn.Linear(4 * config.n_embd, config.n_embd, bias=config.bias)
+        self.c_proj1 = nn.Linear(4 * config.n_embd, self.w, bias=config.bias)
+        self.c_proj2 = nn.Linear(self.w, config.n_embd, bias=config.bias)
+        self.dropout = nn.Dropout(config.dropout)
+
+    def forward(self, x, expand=False):
+        # if not expand and collapsed == False:
+        # if True:
+        # with torch.no_grad():
+            # self.c_fc.weight = Parameter(self.c_fc2.weight @ self.c_fc1.weight)
+        if not expand:
+            with torch.no_grad():
+                x = self.c_fc(x)
+        else:
+            x = self.c_fc1(x)
+            x = self.c_fc2(x)
+            self.c_fc.weight = Parameter(self.c_fc2.weight @ self.c_fc1.weight)
+        x = self.gelu(x)
+        if not expand:
+            with torch.no_grad():
+                x = self.c_proj(x)
+        else:
+            x = self.c_proj1(x)
+            x = self.c_proj2(x)
+            self.c_proj.weight = Parameter(self.c_proj2.weight @ self.c_proj1.weight)
+        x = self.dropout(x)
+        return x
+```
+
 ## Expansive NanoGPT
 
 ```

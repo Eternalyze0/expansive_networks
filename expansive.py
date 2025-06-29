@@ -15,6 +15,8 @@ class Net(nn.Module):
         self.e1 = nn.Linear(128, 128)
         self.e2 = nn.Linear(128, 128)
         self.e3 = nn.Linear(128, 128)
+        self.e4 = nn.Linear(128, 128)
+        self.e5 = nn.Linear(128, 128)
         self.fc2 = nn.Linear(128, 10)
         self.expand = expand
 
@@ -26,6 +28,8 @@ class Net(nn.Module):
             x = self.e1(x) + res
             x = self.e2(x) + res
             x = self.e3(x) + res
+            x = self.e4(x) + res
+            x = self.e5(x) + res
         x = F.relu(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -130,7 +134,8 @@ def main():
 
         model = Net(expand=expand).to(device)
         # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
-        optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
+        # optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
+        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
         scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
         for epoch in range(1, args.epochs + 1):

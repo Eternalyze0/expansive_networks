@@ -7,29 +7,35 @@ from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
 import matplotlib.pyplot as plt
+from torch.nn.parameter import Parameter
 
 class Net(nn.Module):
     def __init__(self, expand=False):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(784, 128)
-        self.e1 = nn.Linear(128, 128)
-        self.e2 = nn.Linear(128, 128)
-        self.e3 = nn.Linear(128, 128)
-        self.e4 = nn.Linear(128, 128)
-        self.e5 = nn.Linear(128, 128)
+        self.e1 = nn.Linear(128, 128, bias=False)
+        self.e2 = nn.Linear(128, 128, bias=False)
+        self.e3 = nn.Linear(128, 128, bias=False)
+        self.e4 = nn.Linear(128, 128, bias=False)
+        self.e5 = nn.Linear(128, 128, bias=False)
         self.fc2 = nn.Linear(128, 10)
         self.expand = expand
 
     def forward(self, x):
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        if self.expand:
+        if self.expand and self.training:
             res = x
-            x = self.e1(x) + res
-            x = self.e2(x) + res
-            x = self.e3(x) + res
-            x = self.e4(x) + res
+            x = self.e1(x)
+            x = self.e2(x)
+            x = self.e3(x)
+            x = self.e4(x)
             x = self.e5(x) + res
+        if self.expand and not self.training:
+            res = x
+            c = nn.Linear(128, 128, bias=False)
+            c.weight = Parameter(self.e5.weight @ self.e4.weight @ self.e3.weight @ self.e2.weight @ self.e1.weight)
+            x = c(x) + res
         x = F.relu(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)

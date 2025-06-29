@@ -24,16 +24,20 @@ class Net(nn.Module):
     def forward(self, x, test_collapse=False):
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        if self.expansive and (self.training or test_collapse):
-            res = x
-            x = self.e1(x)
-            x = self.e2(x)
-        else:
-            res = x
-            c = nn.Linear(128, 128, bias=False)
-            with torch.no_grad():
-                c.weight = Parameter(self.e2.weight @ self.e1.weight)
-            x = c(x)
+        if self.expansive:
+            if self.training or test_collapse:
+                res = x
+                x = self.e1(x)
+                x = self.e2(x)
+                x = self.e3(x)
+                x = self.e4(x)
+                x = self.e5(x) + res
+            else:
+                res = x
+                c = nn.Linear(128, 128, bias=False)
+                with torch.no_grad():
+                    c.weight = Parameter(self.e5.weight @ self.e4.weight @ self.e3.weight @ self.e2.weight @ self.e1.weight)
+                x = c(x) + res
         x = F.relu(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -141,8 +145,8 @@ def main():
 
         model = Net(expansive=expansive).to(device)
         # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
-        # optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
-        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
+        # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
         scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
         for epoch in range(1, args.epochs + 1):

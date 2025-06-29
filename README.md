@@ -1,7 +1,7 @@
 # Expansive Networks
 The hypothesis is that, while mathematically equivalent and contrary to modern wisdom, two consecutive matrices of sizes 100x10000 and 10000x100 with no non-linearity inbetween them actually learn more easily than one 100x100 matrix. We call the act of replacing the 100x100 matrix by the former two matrices "expansion". We propose Expansive Networks -- a family of neural networks that are trained with expansions which are then collapsed at test-time via matrix multiplication. Only one layer is expanded at a time for computational memory savings. 
 
-![image](https://github.com/user-attachments/assets/d47339bb-2e9a-4123-8e3f-87d9a9039e75)
+![score](https://github.com/user-attachments/assets/a9c0c52c-e50b-4d56-a053-2367a2adc357)
 
 (for SGD with 0.9 momentum, dense networks, see code summary below)
 
@@ -15,28 +15,34 @@ python3.10 expansive.py --epochs 10
 
 ```py
 class Net(nn.Module):
-    def __init__(self, expand=False):
+    def __init__(self, expansive=False):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(784, 128)
-        self.e1 = nn.Linear(128, 128)
-        self.e2 = nn.Linear(128, 128)
-        self.e3 = nn.Linear(128, 128)
+        self.e1 = nn.Linear(128, 128, bias=False)
+        self.e2 = nn.Linear(128, 128, bias=False)
+        self.e3 = nn.Linear(128, 128, bias=False)
+        self.e4 = nn.Linear(128, 128, bias=False)
+        self.e5 = nn.Linear(128, 128, bias=False)
         self.fc2 = nn.Linear(128, 10)
-        self.expand = expand
+        self.expansive = expansive
 
-    def forward(self, x):
+    def forward(self, x, test_collapse=False):
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        if self.expand:
+        if self.expansive and (self.training or test_collapse):
             res = x
-            x = self.e1(x) + res
-            x = self.e2(x) + res
-            x = self.e3(x) + res
+            x = self.e1(x)
+            x = self.e2(x)
+        else:
+            res = x
+            c = nn.Linear(128, 128, bias=False)
+            with torch.no_grad():
+                c.weight = Parameter(self.e2.weight @ self.e1.weight)
+            x = c(x)
         x = F.relu(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
         return output
-
 ```
 
 ## Expansive NanoGPT

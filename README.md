@@ -6,7 +6,7 @@ While mathematically equivalent and contrary to modern wisdom, two consecutive m
 ## Usage
 
 ```
-python3.10 expansive.py --epochs 10
+python3.10 expansive.py --epochs 20
 ```
 
 ## Code Summary

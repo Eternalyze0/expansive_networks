@@ -6,7 +6,7 @@ The hypothesis is that, while mathematically equivalent and contrary to modern w
 ## Usage
 
 ```
-python3.10 expansive.py
+python3.10 expansive.py --epochs 10
 ```
 
 ## Code Summary

@@ -12,44 +12,29 @@ python3.10 expansive.py
 ## Code Summary
 
 ```py
-        if self.training:
-            x = x + self.mlp(self.ln_2(x), expand=True if torch.randint(100, (1,)) == 0 else False)
-        else:
-            x = x + self.mlp(self.ln_2(x), expand=False)
-```
-```py
-class MLP(nn.Module):
+class Net(nn.Module):
+    def __init__(self, expand=False):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(784, 128)
+        self.e1 = nn.Linear(128, 128)
+        self.e2 = nn.Linear(128, 128)
+        self.e3 = nn.Linear(128, 128)
+        self.fc2 = nn.Linear(128, 10)
+        self.expand = expand
 
-    def __init__(self, config):
-        super().__init__()
-        self.w = 2000
-        self.c_fc    = nn.Linear(config.n_embd, 4 * config.n_embd, bias=config.bias)
-        self.c_fc1   = nn.Linear(config.n_embd, self.w, bias=config.bias)
-        self.c_fc2   = nn.Linear(self.w, 4 * config.n_embd, bias=config.bias)
-        self.gelu    = nn.GELU()
-        self.c_proj  = nn.Linear(4 * config.n_embd, config.n_embd, bias=config.bias)
-        self.c_proj1 = nn.Linear(4 * config.n_embd, self.w, bias=config.bias)
-        self.c_proj2 = nn.Linear(self.w, config.n_embd, bias=config.bias)
-        self.dropout = nn.Dropout(config.dropout)
+    def forward(self, x):
+        x = torch.flatten(x, 1)
+        x = self.fc1(x)
+        if self.expand:
+            res = x
+            x = self.e1(x) + res
+            x = self.e2(x) + res
+            x = self.e3(x) + res
+        x = F.relu(x)
+        x = self.fc2(x)
+        output = F.log_softmax(x, dim=1)
+        return output
 
-    def forward(self, x, expand=False):
-        if not expand:
-            with torch.no_grad():
-                x = self.c_fc(x)
-        else:
-            x = self.c_fc1(x)
-            x = self.c_fc2(x)
-            self.c_fc.weight = Parameter(self.c_fc2.weight @ self.c_fc1.weight)
-        x = self.gelu(x)
-        if not expand:
-            with torch.no_grad():
-                x = self.c_proj(x)
-        else:
-            x = self.c_proj1(x)
-            x = self.c_proj2(x)
-            self.c_proj.weight = Parameter(self.c_proj2.weight @ self.c_proj1.weight)
-        x = self.dropout(x)
-        return x
 ```
 
 ## Expansive NanoGPT

@@ -3,7 +3,7 @@ The hypothesis is that, while mathematically equivalent and contrary to modern w
 
 ![image](https://github.com/user-attachments/assets/d47339bb-2e9a-4123-8e3f-87d9a9039e75)
 
-(for SGD with 0.9 momentum, dense networks)
+(for SGD with 0.9 momentum, dense networks, see code summary below)
 
 ## Usage
 

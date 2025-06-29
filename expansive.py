@@ -18,6 +18,21 @@ class Net(nn.Module):
         self.e3 = nn.Linear(128, 128, bias=False)
         self.e4 = nn.Linear(128, 128, bias=False)
         self.e5 = nn.Linear(128, 128, bias=False)
+        self.e6 = nn.Linear(128, 128, bias=False)
+        self.e7 = nn.Linear(128, 128, bias=False)
+        self.e8 = nn.Linear(128, 128, bias=False)
+        self.e9 = nn.Linear(128, 128, bias=False)
+        self.e10 = nn.Linear(128, 128, bias=False)
+        self.e11 = nn.Linear(128, 128, bias=False)
+        self.e12 = nn.Linear(128, 128, bias=False)
+        self.e13 = nn.Linear(128, 128, bias=False)
+        self.e14 = nn.Linear(128, 128, bias=False)
+        self.e15 = nn.Linear(128, 128, bias=False)
+        self.e16 = nn.Linear(128, 128, bias=False)
+        self.e17 = nn.Linear(128, 128, bias=False)
+        self.e18 = nn.Linear(128, 128, bias=False)
+        self.e19 = nn.Linear(128, 128, bias=False)
+        self.e20 = nn.Linear(128, 128, bias=False)
         self.fc2 = nn.Linear(128, 10)
         self.expansive = expansive
 
@@ -31,13 +46,34 @@ class Net(nn.Module):
                 x = self.e2(x)
                 x = self.e3(x)
                 x = self.e4(x)
-                x = self.e5(x) + res
+                x = self.e5(x)
+                x = self.e6(x)
+                x = self.e7(x)
+                x = self.e8(x)
+                x = self.e9(x)
+                x = self.e10(x)
+                x = self.e11(x)
+                x = self.e12(x)
+                x = self.e13(x)
+                x = self.e14(x)
+                x = self.e15(x)
+                x = self.e16(x)
+                x = self.e17(x)
+                x = self.e18(x)
+                x = self.e19(x)
+                x = self.e20(x)    
+                x = x + res
             else:
                 res = x
                 c = nn.Linear(128, 128, bias=False)
                 with torch.no_grad():
-                    c.weight = Parameter(self.e5.weight @ self.e4.weight @ self.e3.weight @ self.e2.weight @ self.e1.weight)
-                x = c(x) + res
+                    c.weight = Parameter(
+                        self.e20.weight @ self.e19.weight @ self.e18.weight @ self.e17.weight @ self.e16.weight @ \
+                        self.e15.weight @ self.e14.weight @ self.e13.weight @ self.e12.weight @ self.e11.weight @ \
+                        self.e10.weight @ self.e9.weight @ self.e8.weight @ self.e7.weight @ self.e6.weight @ \
+                        self.e5.weight @ self.e4.weight @ self.e3.weight @ self.e2.weight @ self.e1.weight)
+                x = c(x) 
+                x = x + res
         x = F.relu(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -147,6 +183,12 @@ def main():
 
         model = Net(expansive=expansive).to(device)
         model.load_state_dict(init_model.state_dict())
+        if not expansive:
+            for name, param in model.named_parameters():
+                if name[0] == 'e':
+                    with torch.no_grad():
+                        param.copy_(float('nan'))
+                        # print(param)
         # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
         optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
         # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -161,7 +203,7 @@ def main():
         if args.save_model:
             torch.save(model.state_dict(), "mnist_cnn.pt")
 
-        plt.plot(score[expansive], label=str(expansive)+" "+str(score[expansive][-1]))
+        plt.plot(score[expansive], label=str(expansive)+" "+str(score[expansive][-1])+" "+str(score[expansive][-1]/100)+"%")
     plt.legend(title="Expansive")
     plt.xlabel("Epoch")
     plt.ylabel("Number of Correct Test Classifications on MNIST")

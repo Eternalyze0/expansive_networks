@@ -141,9 +141,12 @@ def main():
 
     score = {False: [], True: []}
 
+    init_model = Net().to(device)
+
     for expansive in [False, True]:
 
         model = Net(expansive=expansive).to(device)
+        model.load_state_dict(init_model.state_dict())
         # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
         optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
         # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -158,7 +161,7 @@ def main():
         if args.save_model:
             torch.save(model.state_dict(), "mnist_cnn.pt")
 
-        plt.plot(score[expansive], label=expansive)
+        plt.plot(score[expansive], label=str(expansive)+" "+str(score[expansive][-1]))
     plt.legend(title="Expansive")
     plt.xlabel("Epoch")
     plt.ylabel("Number of Correct Test Classifications on MNIST")

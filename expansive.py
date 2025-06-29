@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from torch.nn.parameter import Parameter
 
 class Net(nn.Module):
-    def __init__(self, expand=False):
+    def __init__(self, expansive=False):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(784, 128)
         self.e1 = nn.Linear(128, 128, bias=False)
@@ -19,23 +19,21 @@ class Net(nn.Module):
         self.e4 = nn.Linear(128, 128, bias=False)
         self.e5 = nn.Linear(128, 128, bias=False)
         self.fc2 = nn.Linear(128, 10)
-        self.expand = expand
+        self.expansive = expansive
 
-    def forward(self, x):
+    def forward(self, x, test_collapse=False):
         x = torch.flatten(x, 1)
         x = self.fc1(x)
-        if self.expand and self.training:
+        if self.expansive and (self.training or test_collapse):
             res = x
             x = self.e1(x)
             x = self.e2(x)
-            x = self.e3(x)
-            x = self.e4(x)
-            x = self.e5(x) + res
-        if self.expand and not self.training:
+        else:
             res = x
             c = nn.Linear(128, 128, bias=False)
-            c.weight = Parameter(self.e5.weight @ self.e4.weight @ self.e3.weight @ self.e2.weight @ self.e1.weight)
-            x = c(x) + res
+            with torch.no_grad():
+                c.weight = Parameter(self.e2.weight @ self.e1.weight)
+            x = c(x)
         x = F.relu(x)
         x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
@@ -67,6 +65,9 @@ def test(model, device, test_loader):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
+            output_test_collapse = model(data, test_collapse=True)
+            print("collapsed - expanded:", torch.sum(torch.abs(torch.sub(output, output_test_collapse))))
+            # assert torch.equal(output, output_test_collapse)
             test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -136,23 +137,24 @@ def main():
 
     score = {False: [], True: []}
 
-    for expand in [False, True]:
+    for expansive in [False, True]:
 
-        model = Net(expand=expand).to(device)
+        model = Net(expansive=expansive).to(device)
         # optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
         # optimizer = optim.AdamW(model.parameters(), lr=0.001, betas=(0.95, 0.95))
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
         scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
         for epoch in range(1, args.epochs + 1):
+            # score[expansive].append(test(model, device, test_loader))
             train(args, model, device, train_loader, optimizer, epoch)
-            score[expand].append(test(model, device, test_loader))
+            score[expansive].append(test(model, device, test_loader))
             scheduler.step()
 
         if args.save_model:
             torch.save(model.state_dict(), "mnist_cnn.pt")
 
-        plt.plot(score[expand], label=expand)
+        plt.plot(score[expansive], label=expansive)
     plt.legend(title="Expansive")
     plt.xlabel("Epoch")
     plt.ylabel("Number of Correct Test Classifications on MNIST")
